@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "microsoft-cognitiveservices-speech-sdk": "^1.36.0"
+  }
+}

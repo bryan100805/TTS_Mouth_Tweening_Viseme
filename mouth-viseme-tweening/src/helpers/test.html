@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <title>Document</title>
+</head>
+<body>
+    
+</body>
+<script>
+const interpolatePath = (startPath, endPath, numFrames, cp1x, cp1y, cp2x, cp2y) => {
+    const interpolator = d3.interpolate(startPath, endPath);
+    return Array.from({ length: numFrames + 1 }, (_, i) => {
+        const t = i / (numFrames);
+        const { y } = cubicBezier(t, [cp1x, cp1y], [cp2x, cp2y]);
+        return interpolator(y);
+    });
+};
+
+function cubicBezier(t, p1, p2) {
+    const [cp1x, cp1y] = p1;
+    const [cp2x, cp2y] = p2;
+    const t2 = t * t;
+    const t3 = t2 * t;
+    const mt = 1 - t;
+    const mt2 = mt * mt;
+    const mt3 = mt2 * mt;
+    const x = mt3 * 0 + 3 * mt2 * t * cp1x + 3 * mt * t2 * cp2x + t3 * 1;
+    const y = mt3 * 0 + 3 * mt2 * t * cp1y + 3 * mt * t2 * cp2y + t3 * 1;
+    return { x, y };
+}
+
+let startPath = "M617.38,518.45c6.98-5.09,182.54-121.97,344.16-121.97s314.81,108.73,341.08,120.28c-21.56,28.81-205.35,222.18-346.01,222.18-121.25,0-292.7-149.74-339.23-220.5Z";
+let endPath = "M278.8,525.25c113.82-21.51,306.16-177.85,674.21-177.85s617.11,166.69,686.76,176.39c-38.35,36.01-261.43,432.93-685.11,426.92-423.69-6.01-653.27-405.78-675.86-425.46Z";
+let numFrames = 20;
+let cp1x = 0.25;
+let cp1y = 1;
+let cp2x = 0.25;
+let cp2y = 1;
+
+let test = interpolatePath(startPath, endPath, numFrames, cp1x, cp1y, cp2x, cp2y);
+
+console.log(test);
+</script>
+</html>

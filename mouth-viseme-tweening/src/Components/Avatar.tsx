@@ -1,5 +1,9 @@
 import * as React from "react";
 import type { SVGProps } from "react";
+import { useState } from "react";
+
+import { interpolatePath } from "../helpers/d3interpolator.js";
+
 import * as sdk from "microsoft-cognitiveservices-speech-sdk";
 import viseme_id_0 from "../Assets/visemes/Mouth-01.svg";
 import viseme_id_1 from "../Assets/visemes/Mouth-02.svg";
@@ -23,8 +27,6 @@ import viseme_id_18 from "../Assets/visemes/Mouth-19.svg";
 import viseme_id_19 from "../Assets/visemes/Mouth-20.svg";
 import viseme_id_20 from "../Assets/visemes/Mouth-21.svg";
 import viseme_id_21 from "../Assets/visemes/Mouth-22.svg";
-
-import { useState } from "react";
 
 import FemaleSpeakers from "../configs/femaleSpeakers";
 
@@ -62,20 +64,24 @@ function Avatar(props: SVGProps<SVGSVGElement>) {
     21: viseme_id_21,
   };
 
+
   // define the states
   const [imageIndex, setImageIndex] = useState(0);
+  const [numFrames, setNumFrames] = useState(10);
+  const [cp1x, setCp1x] = useState(0.25);
+  const [cp1y, setCp1y] = useState(1);
+  const [cp2x, setCp2x] = useState(0.25);
+  const [cp2y, setCp2y] = useState(1);
   const [selectedVoice, setSelectedVoice] =
     useState<string>("en-Us-JennyNeural");
   const [sentence, setSelectedSentence] = useState<string>(
-    "Hello, I am a Microsoft Cognitive Services Speech SDK user."
+    "Hello, how are you?"
   );
 
   const sentences = [
-    "Hello, I am a Microsoft Cognitive Services Speech SDK user.",
-    "The quick brown fox jumps over the lazy dog.",
-    "The early bird catches the worm.",
-    "A stitch in time saves nine.",
-    "Actions speak louder than words."
+    "Hello, how are you?",
+    "The quick brown fox jumps over the lazy dog",
+    "The total number of stars in the universe is greater than the number of grains of sand on all the beaches on Earth"
   ];
 
   function synthesizeSpeech() {
@@ -92,6 +98,8 @@ function Avatar(props: SVGProps<SVGSVGElement>) {
         </voice> \r\n \
     </speak>`;
 
+    let lastVisemeId = 0;
+
     // Subscribes to viseme received event
     speechSynthesizer.visemeReceived = function (s, e) {
       window.console.log(
@@ -102,6 +110,10 @@ function Avatar(props: SVGProps<SVGSVGElement>) {
       );
 
       visemes_arr.push(e);
+
+      const nextVisemeId = e.visemeId;
+      interpolateAndSetViseme(lastVisemeId, nextVisemeId);
+      lastVisemeId = nextVisemeId;
     };
     speechSynthesizer.speakSsmlAsync(
       ssml,
@@ -137,6 +149,73 @@ function Avatar(props: SVGProps<SVGSVGElement>) {
   const handleVoiceChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedVoice(event.target.value);
   };
+
+  const interpolateAndSetViseme = async (startId: number, endId: number) => {
+    const [startPaths, endPaths] = await Promise.all([
+      fetchSvgAndExtractPaths(visemeMap[startId]),
+      fetchSvgAndExtractPaths(visemeMap[endId])
+    ]);
+  
+    console.log(`Interpolating between viseme ${startId} and ${endId}`);
+    console.log(`Start Paths:`, startPaths);
+    console.log(`End Paths:`, endPaths);
+  
+    // Assuming equal number of paths or handling it differently if needed
+    const interpolatedFrames = startPaths.map((startPath, i) => {
+      const endPath = endPaths[i] || startPath; // Handle cases where there might not be a matching end path
+      const interpolated_path =  interpolatePath(startPath, endPath, numFrames, cp1x, cp1y, cp2x, cp2y);
+      console.log(`Interpolated Path`, interpolated_path);
+      return interpolated_path;
+    });
+  
+    animatedFrames(interpolatedFrames);
+  };
+  
+
+  const fetchSvgAndExtractPaths = (url: string): Promise<string[]> => {
+    return fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.text();
+      })
+      .then(svgContent => {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(svgContent, "image/svg+xml");
+        const paths = xmlDoc.querySelectorAll('path');
+        const paths_arr = Array.from(paths).map(path => path.getAttribute('d') || '');
+        console.log(`Paths`, paths_arr);
+        return paths_arr;
+      })
+      .catch(error => {
+        console.error('Failed to fetch or parse SVG:', error);
+        return [];
+      });
+  };
+  
+
+  const animatedFrames = (frames:any) => {
+    frames.forEach((frame:any, index:any) => {
+      setTimeout(() => {
+        updateSVG(frame);
+      }, index * 200);
+    });
+  };
+
+  const updateSVG = (paths:string[]) => {
+    const svgElement = document.getElementById('avatar_svg__c');
+    if (svgElement){
+      svgElement.innerHTML = ''; // Clear existing paths
+      paths.forEach((d) => {
+        const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        pathElement.setAttribute('values', d);
+        svgElement.appendChild(pathElement);
+      });
+    }
+
+  };
+
   return (
     <div>
       <div className="options">
@@ -145,6 +224,48 @@ function Avatar(props: SVGProps<SVGSVGElement>) {
             <option value={voice.value}> {voice.label} </option>
           ))}
         </select>
+      </div>
+      <div>
+        <label>
+          Number of Frames:
+          <input
+            type="number"
+            value={numFrames}
+            onChange={(e) => setNumFrames(parseInt(e.target.value))}
+          />
+        </label>
+        <label>
+          Control Point 1 X:
+          <input
+            type="number"
+            value={cp1x}
+            onChange={(e) => setCp1x(parseFloat(e.target.value))}
+          />
+        </label>
+        <label>
+          Control Point 1 Y:
+          <input
+            type="number"
+            value={cp1y}
+            onChange={(e) => setCp1y(parseFloat(e.target.value))}
+          />
+        </label>
+        <label>
+          Control Point 2 X:
+          <input
+            type="number"
+            value={cp2x}
+            onChange={(e) => setCp2x(parseFloat(e.target.value))}
+          />
+        </label>
+        <label>
+          Control Point 2 Y:
+          <input
+            type="number"
+            value={cp2y}
+            onChange={(e) => setCp2y(parseFloat(e.target.value))}
+          />
+        </label>
       </div>
       <svg
         xmlns="http://www.w3.org/2000/svg"

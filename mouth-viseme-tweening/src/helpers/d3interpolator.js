@@ -1,4 +1,4 @@
-// d3interpolator.ts
+// d3interpolator.js
 import * as d3 from 'd3';
 
 export const interpolatePath = (startPath, endPath, numFrames, cp1x, cp1y, cp2x, cp2y) => {

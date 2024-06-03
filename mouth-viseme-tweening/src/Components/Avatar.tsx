@@ -75,13 +75,11 @@ function Avatar(props: SVGProps<SVGSVGElement>) {
   const [selectedVoice, setSelectedVoice] =
     useState<string>("en-Us-JennyNeural");
   const [sentence, setSelectedSentence] = useState<string>(
-    "Hello, how are you?"
+    "Hi"
   );
-
+  let lastVisemeId: number | null = null; // Initialize outside to retain state across events
   const sentences = [
-    "Hello, how are you?",
-    "The quick brown fox jumps over the lazy dog",
-    "The total number of stars in the universe is greater than the number of grains of sand on all the beaches on Earth"
+    "Hi"
   ];
 
   function synthesizeSpeech() {
@@ -98,7 +96,6 @@ function Avatar(props: SVGProps<SVGSVGElement>) {
         </voice> \r\n \
     </speak>`;
 
-    let lastVisemeId = 0;
 
     // Subscribes to viseme received event
     speechSynthesizer.visemeReceived = function (s, e) {
@@ -112,7 +109,9 @@ function Avatar(props: SVGProps<SVGSVGElement>) {
       visemes_arr.push(e);
 
       const nextVisemeId = e.visemeId;
-      interpolateAndSetViseme(lastVisemeId, nextVisemeId);
+      if (lastVisemeId !== null && lastVisemeId !== e.visemeId) { // Only interpolate if the last ID is different
+        interpolateAndSetViseme(lastVisemeId, e.visemeId);
+      }
       lastVisemeId = nextVisemeId;
     };
     speechSynthesizer.speakSsmlAsync(
@@ -150,28 +149,6 @@ function Avatar(props: SVGProps<SVGSVGElement>) {
     setSelectedVoice(event.target.value);
   };
 
-  const interpolateAndSetViseme = async (startId: number, endId: number) => {
-    const [startPaths, endPaths] = await Promise.all([
-      fetchSvgAndExtractPaths(visemeMap[startId]),
-      fetchSvgAndExtractPaths(visemeMap[endId])
-    ]);
-  
-    console.log(`Interpolating between viseme ${startId} and ${endId}`);
-    console.log(`Start Paths:`, startPaths);
-    console.log(`End Paths:`, endPaths);
-  
-    // Assuming equal number of paths or handling it differently if needed
-    const interpolatedFrames = startPaths.map((startPath, i) => {
-      const endPath = endPaths[i] || startPath; // Handle cases where there might not be a matching end path
-      const interpolated_path =  interpolatePath(startPath, endPath, numFrames, cp1x, cp1y, cp2x, cp2y);
-      console.log(`Interpolated Path`, interpolated_path);
-      return interpolated_path;
-    });
-  
-    animatedFrames(interpolatedFrames);
-  };
-  
-
   const fetchSvgAndExtractPaths = (url: string): Promise<string[]> => {
     return fetch(url)
       .then(response => {
@@ -193,28 +170,49 @@ function Avatar(props: SVGProps<SVGSVGElement>) {
         return [];
       });
   };
+
+  const interpolateAndSetViseme = async (startId: number, endId: number) => {
+    const [startPaths, endPaths] = await Promise.all([
+      fetchSvgAndExtractPaths(visemeMap[startId]),
+      fetchSvgAndExtractPaths(visemeMap[endId])
+    ]);
+  
+    console.log(`Interpolating between viseme ${startId} and ${endId}`);
+    console.log(`Start Paths:`, startPaths);
+    console.log(`End Paths:`, endPaths);
+  
+    // Assuming equal number of paths or handling it differently if needed
+    const interpolatedFrames = startPaths.map((startPath, i) => {
+      const endPath = endPaths[i] || startPath; // Handle cases where there might not be a matching end path
+      const interpolated_path =  interpolatePath(startPath, endPath, numFrames-1, cp1x, cp1y, cp2x, cp2y);
+      console.log(`Interpolated Path`, interpolated_path);
+      return interpolated_path;
+    });
+  
+    // animatedFrames(interpolatedFrames);
+  };
   
 
-  const animatedFrames = (frames:any) => {
-    frames.forEach((frame:any, index:any) => {
-      setTimeout(() => {
-        updateSVG(frame);
-      }, index * 200);
-    });
-  };
+//   const animatedFrames = (frames:any) => {
+//     frames.forEach((frame:any, index:any) => {
+//       setTimeout(() => {
+//         updateSVG(frame);
+//       }, index * 200);
+//     });
+//   };
 
-  const updateSVG = (paths:string[]) => {
-    const svgElement = document.getElementById('avatar_svg__c');
-    if (svgElement){
-      svgElement.innerHTML = ''; // Clear existing paths
-      paths.forEach((d) => {
-        const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        pathElement.setAttribute('values', d);
-        svgElement.appendChild(pathElement);
-      });
-    }
+//   const updateSVG = (paths:string[]) => {
+//     const svgElement = document.getElementById('avatar_svg__d');
+//     if (svgElement){
+//       svgElement.innerHTML = ''; // Clear existing paths
+//       paths.forEach((d) => {
+//         const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+//         pathElement.setAttribute('values', d);
+//         svgElement.appendChild(pathElement);
+//       });
+//     }
 
-  };
+//   };
 
   return (
     <div>

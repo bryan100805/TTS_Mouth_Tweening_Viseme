@@ -1,5 +1,38 @@
+body{
+  height: 50%;
+  width: 100%;
+  font-family: 'Arial', sans-serif;
+  color: #333; 
+  font-size: 16px;
+}
+
+.outer-div{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+
+.control-panel {
+  width:50;
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  padding: 20px;
+  margin-top: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+
 .App {
   text-align: center;
+  height: 100%;
+  width: 100%;
 }
 
 .App-logo {
@@ -15,7 +48,6 @@
 
 .App-header {
   background-color: #ffffff;
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -38,18 +70,41 @@
 }
 
 .button{
-  width:100%;
-  height:100%;
-  font-size: 20px;
+  font-size: 16px;
   background-color: #61dafb;
+  border-radius: 4px;
   color:black;
   border:none;
-  margin-bottom:50px;
 }
 
-.options{
+/* .speak{
+  width: 25%;
+} */
+
+.input-group label {
+  display: block;
+  font-size: 16px;
+  color: #333;
+  text-align: left;
+}
+
+.input-group{
+  width: 100%;
   display: flex;
-  flex-direction: column;
-  margin-bottom:20px;
-  justify-content: space-around;
+  align-content: space-around;
+  margin-bottom: 8px;
+}
+
+.input-group select {
+  width: 50%
+}
+
+input, .input-group select {
+  width: 75%;
+  margin-left: 4rem;
+  font-size: 16px;
+}
+
+.animation {
+  height: 10vh;
 }

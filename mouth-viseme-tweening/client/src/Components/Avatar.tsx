@@ -68,11 +68,11 @@ function Avatar(props: SVGProps<SVGSVGElement>) {
   };
 
   // define the states
-  const [imageIndex, setImageIndex] = useState(0); // Used for initial implementation of text-to-speech without in-betweens
+  // const [imageIndex, setImageIndex] = useState(0); // Used for initial implementation of text-to-speech without in-betweens
   const [numFrames, setNumFrames] = useState(10);
-  const [cp1x, setCp1x] = useState(0.42);
-  const [cp1y, setCp1y] = useState(0);
-  const [cp2x, setCp2x] = useState(0.58);
+  const [cp1x, setCp1x] = useState(0.25);
+  const [cp1y, setCp1y] = useState(1);
+  const [cp2x, setCp2x] = useState(0.25);
   const [cp2y, setCp2y] = useState(1);
   const [selectedVoice, setSelectedVoice] =
     useState<string>("en-Us-JennyNeural");
@@ -179,7 +179,6 @@ function Avatar(props: SVGProps<SVGSVGElement>) {
         lastVisemeId = nextVisemeId;
         viseme_Number += 1;
         //If inbetweens array is a 2x2 array:
-        console.log(`Visemes Array`, visemes_arr.length);
         // Loop through the outer dimension of the inbetweens array
         for (let j = 0; j < visemes_arr.length - 1; j++) {
           // console.log(`Stuff inside visemes array`,index, e.visemeId, e.audioOffset)
@@ -192,7 +191,7 @@ function Avatar(props: SVGProps<SVGSVGElement>) {
             // if(!inbetweens[j][i]){
             //   console.log(`Undefined`, inbetweens[j][i]);
             // }
-            console.log(`SVG stuf`, inbetweens[j][i]);
+            console.log(`Checking for InBetween SVG [`,j,`][`,i,`]`, inbetweens[j][i]);
 
             // Set the innerHTML of the SVG to the interpolated inbetweens, set a timeout to display each inbetween frame from the moment the viseme is detected
             // i+1 is added to the duration to stagger the display of the inbetweens (cannot be 0 as no number can be divided by 0)

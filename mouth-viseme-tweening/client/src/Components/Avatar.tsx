@@ -81,7 +81,9 @@ function Avatar(props: SVGProps<SVGSVGElement>) {
   let lastVisemeId: number | null = null; // Initialize outside to retain state across events
 
   // Add more sentences here:
-  const sentences = ["Hello."];
+  const sentences = [
+    "Hello.", "My name is the Avatar."
+  ];
   let inbetweens: string[][] = [];
 
   function synthesizeSpeech() {
@@ -170,10 +172,25 @@ function Avatar(props: SVGProps<SVGSVGElement>) {
 
         const nextVisemeId = e.visemeId;
         console.log(`Viseme Number: ${viseme_Number}`);
-        if (lastVisemeId !== null && lastVisemeId !== e.visemeId) {
+        if (lastVisemeId !== null && lastVisemeId !== e.visemeId && visemes_arr.length > 1) {
           // Only interpolate if the last ID is different
           //Interpolate between every 2 visemes to generate the inbetweens (helpers/d3interpolator.js)
-          interpolateAndSetViseme(lastVisemeId, e.visemeId);
+          const lastEvent = visemes_arr[visemes_arr.length - 2];
+          const currentEvent = visemes_arr[visemes_arr.length - 1];
+          const durationMS = (currentEvent.audioOffset - lastEvent.audioOffset)/10000; // Find the duration between the last viseme and the current viseme in ms since audio offset is cumulative
+          console.log("Last Event", lastEvent.visemeId, ":" ,lastEvent.audioOffset);
+          console.log("Current Event", currentEvent.visemeId, ":" ,currentEvent.audioOffset);
+          console.log("Duration", durationMS);
+          
+          // If the duration between the last viseme and the current viseme is greater than 41.666ms (24fps), interpolate between the last viseme and the current viseme
+          if (durationMS > 41.666) {
+            interpolateAndSetViseme(lastEvent.visemeId, currentEvent.visemeId);
+          }
+          else{
+            pushKeyframes(currentEvent.visemeId)
+          }
+
+          // interpolateAndSetViseme(lastVisemeId, e.visemeId);
         }
 
         lastVisemeId = nextVisemeId;
@@ -213,17 +230,18 @@ function Avatar(props: SVGProps<SVGSVGElement>) {
             console.log(JSON.stringify(result));
           }
 
-          // visemes_arr = [];
+          visemes_arr = [];
           speechSynthesizer.close();
         },
         (error) => {
           console.log(error);
-          // visemes_arr = [];
+          visemes_arr = [];
           speechSynthesizer.close();
         }
       ),
     ]);
   }
+
 
   // Handle click event selects a random sentence to be said now
   const handleClick = () => {
@@ -337,6 +355,14 @@ function Avatar(props: SVGProps<SVGSVGElement>) {
     // const svgFooter = `</svg>`;
     return pathElements;
   };
+
+  // Push keyframes for the current viseme if the duration between current viseme and last viseme is less than 41.666ms
+  const pushKeyframes = (visemeId: number) => {
+    fetchSvgAndExtractPaths(visemeMap[visemeId]).then((paths) => {
+      const svgContent = createSvgContent(paths);
+      inbetweens.push(Array(numFrames).fill(svgContent));
+    });
+  }
 
   return (
     <div className="outer-div">
